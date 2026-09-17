@@ -106,7 +106,7 @@ class _CredentialsStep extends StatelessWidget {
                 child: TextButton(
                   onPressed: () {},
                   style: TextButton.styleFrom(foregroundColor: AppColors.brandRed, padding: EdgeInsets.zero),
-                  child: const Text('Forgot password?', style: AppTextStyles.link),
+                  child: Text('Forgot password?', style: AppTextStyles.link),
                 ),
               ),
               const SizedBox(height: 6),
@@ -166,7 +166,7 @@ class _OtpStep extends StatelessWidget {
           onPressed: controller.backToCredentials,
           style: TextButton.styleFrom(foregroundColor: AppColors.brandNavy, padding: EdgeInsets.zero),
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 15),
-          label: const Text('Back', style: AppTextStyles.bodyMedium),
+          label: Text('Back', style: AppTextStyles.bodyMedium),
         ),
         const SizedBox(height: 12),
         Text('Enter Verification Code', style: AppTextStyles.h1),

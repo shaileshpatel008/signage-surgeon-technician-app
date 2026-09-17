@@ -131,7 +131,7 @@ class _ScanPanel extends StatelessWidget {
                               Obx(
                                 () => controller.connecting.value
                                     ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                                    : const Text('Connect', style: AppTextStyles.link),
+                                    : Text('Connect', style: AppTextStyles.link),
                               ),
                             ],
                           ),
