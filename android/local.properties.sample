@@ -1,0 +1,9 @@
+# Copy to android/local.properties (gitignored, machine-specific — Flutter
+# itself regenerates this automatically the first time you run
+# `flutter pub get` / `flutter run` in this project, so you usually don't
+# need to create it by hand).
+sdk.dir=/Users/you/Library/Android/sdk
+flutter.sdk=/Users/you/dev/flutter
+flutter.buildMode=debug
+flutter.versionName=1.0.0
+flutter.versionCode=1

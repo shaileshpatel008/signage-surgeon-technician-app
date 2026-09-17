@@ -1,0 +1,77 @@
+name: signage_surgeon_technician
+description: "The Signage Surgeon — Technician App. Vendor-assigned technicians manage their assigned repair, rebranding, new signage and cleaning visits."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management / routing / DI
+  get: ^4.6.6
+
+  # Firebase — kept in lockstep with the web admin app (same project)
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.4
+
+  # Networking (OTP REST endpoints shared with the web admin login)
+  dio: ^5.7.0
+
+  # Local storage
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.2
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # Bluetooth / BLE
+  flutter_reactive_ble: ^5.4.0
+
+  # UI
+  google_fonts: ^6.2.1
+  cached_network_image: ^3.4.1
+
+  # Media
+  image_picker: ^1.1.2
+  url_launcher: ^6.3.1
+  maps_launcher: ^3.0.0
+
+  # Utils
+  package_info_plus: ^8.1.1
+  intl: ^0.19.0
+  equatable: ^2.0.5
+  logger: ^2.4.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  mocktail: ^1.0.4
+  build_runner: ^2.4.13
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+# `dart run flutter_launcher_icons` regenerates every Android/iOS launcher
+# icon from the brand logo — the placeholder navy squares checked into
+# android/app/src/main/res/mipmap-*/ are just so a fresh clone builds
+# before you've run this.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  adaptive_icon_background: "#0A1628"
+  adaptive_icon_foreground: "assets/images/logo.png"
+
