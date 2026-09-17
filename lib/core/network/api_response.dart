@@ -3,8 +3,8 @@
 sealed class ApiResult<T> {
   const ApiResult();
 
-  factory ApiResult.success(T data) = ApiSuccess<T>;
-  factory ApiResult.failure(String message) = ApiFailure<T>;
+  const factory ApiResult.success(T data) = ApiSuccess<T>;
+  const factory ApiResult.failure(String message) = ApiFailure<T>;
 
   bool get isSuccess => this is ApiSuccess<T>;
   bool get isFailure => this is ApiFailure<T>;
