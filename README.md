@@ -31,22 +31,36 @@ Two kinds of screens live in this app, and every screen says which it is in its 
 git clone <this repo>
 cd signage-surgeon-technician-app
 flutter pub get
-
-# Connects this app to the real Firebase project — registers Android/iOS
-# apps in the Firebase console for you and writes lib/firebase_options.dart
-# (gitignored — this is real per-project config, never committed).
-dart pub global activate flutterfire_cli
-flutterfire configure --project=signage-surgeon74
 ```
 
-That's the only manual step. `lib/firebase_options.sample.dart` documents the shape of what
-`flutterfire configure` generates, in case you want to see it before running the command.
-
-Then:
+Firebase is already wired up — see "Firebase configuration" below — so there's no manual
+`flutterfire configure` step for Android. Just:
 
 ```bash
 flutter run
 ```
+
+### Firebase configuration
+
+`lib/firebase_options.dart` and `android/app/google-services.json` are **committed**, not
+gitignored — deliberately: this is client-side config (API key, app id, project id), and
+Firebase's own docs are explicit that it isn't a secret — real enforcement is Firestore/Storage
+security rules, the same as the web app's `firebase-client.ts` already notes. Committing it
+means `git clone && flutter pub get && flutter run` just works, no CLI login required.
+
+Current state:
+
+- **Android**: fully configured against the real `signage-surgeon74` project (`applicationId
+  com.thesignagesurgeon.technician`, matching the app registered in Firebase Console).
+- **iOS**: not registered yet. `DefaultFirebaseOptions.ios` throws a clear error if hit. To add
+  it: register an iOS app in Firebase Console (bundle id `com.thesignagesurgeon.technician`),
+  then either run `flutterfire configure` (fastest — needs `firebase login` first) or fill in
+  the `ios` block in `lib/firebase_options.dart` by hand from the resulting
+  `GoogleService-Info.plist`, the same way `android` was filled in.
+
+If the Android app's config ever needs to change (new API key, rotated project, etc.),
+regenerate with `flutterfire configure --project=signage-surgeon74` and commit the result —
+same file, same path, no `.gitignore` change needed.
 
 ### Pointing at a different backend (staging, etc.)
 

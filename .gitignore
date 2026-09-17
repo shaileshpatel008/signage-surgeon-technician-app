@@ -31,9 +31,12 @@ ios/.symlinks/
 ios/Flutter/flutter_export_environment.sh
 **/xcuserdata/
 
-# Firebase — generated locally by `flutterfire configure`, never committed
-lib/firebase_options.dart
-android/app/google-services.json
+# Firebase — lib/firebase_options.dart and android/app/google-services.json
+# ARE committed for this project (see README "Firebase configuration"):
+# Firebase's own docs say this client config isn't a secret — real
+# enforcement is Firestore/Storage security rules, not hiding these
+# values. iOS hasn't been registered yet, so its config stays ignored
+# until that happens.
 ios/Runner/GoogleService-Info.plist
 macos/Runner/GoogleService-Info.plist
 
