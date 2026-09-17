@@ -74,7 +74,14 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
         debug {
-            applicationIdSuffix = ".debug"
+            // No applicationIdSuffix: google-services.json only registers
+            // one Android client (com.thesignagesurgeon.technician). A
+            // ".debug" suffix here would change the debug build's real
+            // package id to com.thesignagesurgeon.technician.debug, which
+            // has no matching entry in that file and fails
+            // :app:processDebugGoogleServices with "No matching client
+            // found". Add a second Firebase Android app for the .debug id
+            // if side-by-side debug+release installs are ever needed.
         }
     }
 }

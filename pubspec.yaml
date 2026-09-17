@@ -62,7 +62,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/icons/
 
 # `dart run flutter_launcher_icons` regenerates every Android/iOS launcher
 # icon from the brand logo — the placeholder navy squares checked into
