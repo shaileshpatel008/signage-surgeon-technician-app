@@ -6,6 +6,11 @@ import '../../../data/repositories/auth_repository.dart';
 class SplashController extends GetxController {
   final AuthRepository _authRepository = Get.find();
 
+  /// Guards against `Get.offAllNamed` firing twice — once from the normal
+  /// bootstrap path and once from the manual tap fallback, if both land
+  /// close together.
+  bool _navigated = false;
+
   @override
   void onInit() {
     super.onInit();
@@ -18,18 +23,36 @@ class SplashController extends GetxController {
     final minDelay = Future.delayed(const Duration(milliseconds: 900));
 
     try {
-      final admin = await _authRepository.restoreSession();
+      // `restoreSession()` reads Firestore for a previously-signed-in
+      // user. With no timeout, a stalled read (flaky connection, cold
+      // start on a spotty network) leaves this screen waiting forever
+      // with no way forward — a hard ceiling guarantees the app always
+      // lands somewhere.
+      final admin = await _authRepository.restoreSession().timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              logger.warning('Splash: restoreSession timed out, treating as signed out');
+              return null;
+            },
+          );
       await minDelay;
-
-      if (admin != null) {
-        Get.offAllNamed(Routes.dashboard);
-      } else {
-        Get.offAllNamed(Routes.login);
-      }
+      _goNext(admin != null);
     } catch (e, st) {
       logger.error('Splash bootstrap failed', e, st);
       await minDelay;
-      Get.offAllNamed(Routes.login);
+      _goNext(false);
     }
   }
+
+  void _goNext(bool hasSession) {
+    if (_navigated) return;
+    _navigated = true;
+    Get.offAllNamed(hasSession ? Routes.dashboard : Routes.login);
+  }
+
+  /// Manual fallback — tapping the splash screen sends you to Login
+  /// immediately instead of waiting out the bootstrap/timeout. Session
+  /// restore continues in the background regardless; if it resolves
+  /// first, this is a no-op (see [_navigated]).
+  void skipToLogin() => _goNext(false);
 }
