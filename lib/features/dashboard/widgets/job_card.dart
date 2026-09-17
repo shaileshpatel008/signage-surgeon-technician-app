@@ -106,12 +106,10 @@ class JobCard extends StatelessWidget {
                     ),
                   ),
                 if (job.canMarkArrived)
-                  Obx(
-                    () => ElevatedButton(
-                      onPressed: () => controller.openArrivalOtp(job),
-                      style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 14)),
-                      child: const Text('Mark Arrived', style: TextStyle(fontSize: 11.5)),
-                    ),
+                  ElevatedButton(
+                    onPressed: () => controller.openArrivalOtp(job),
+                    style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 14)),
+                    child: const Text('Mark Arrived', style: TextStyle(fontSize: 11.5)),
                   ),
                 if (job.canMarkCompleted)
                   ElevatedButton(

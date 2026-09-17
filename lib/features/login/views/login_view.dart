@@ -171,18 +171,16 @@ class _OtpStep extends StatelessWidget {
         const SizedBox(height: 12),
         Text('Enter Verification Code', style: AppTextStyles.h1),
         const SizedBox(height: 6),
-        Obx(
-          () => Text.rich(
-            TextSpan(
-              style: AppTextStyles.body.copyWith(color: AppColors.brandGray),
-              children: [
-                const TextSpan(text: 'We sent a 6-digit code to '),
-                TextSpan(
-                  text: controller.emailController.text.trim(),
-                  style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.brandNavy),
-                ),
-              ],
-            ),
+        Text.rich(
+          TextSpan(
+            style: AppTextStyles.body.copyWith(color: AppColors.brandGray),
+            children: [
+              const TextSpan(text: 'We sent a 6-digit code to '),
+              TextSpan(
+                text: controller.emailController.text.trim(),
+                style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.brandNavy),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 22),
