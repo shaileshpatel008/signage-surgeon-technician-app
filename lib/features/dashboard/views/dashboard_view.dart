@@ -97,7 +97,10 @@ class _DashboardHeader extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 8, 16, 18),
           child: Obx(() {
             final name = controller.admin.value?.name;
-            final firstName = (name == null || name.isEmpty) ? 'Technician' : name.split(' ').first;
+            // Full name, not just the first word — a name like "Test SP"
+            // was getting cut down to just "Test" by splitting on the
+            // first space.
+            final displayName = (name == null || name.isEmpty) ? 'Technician' : name;
 
             return Row(
               children: [
@@ -116,7 +119,7 @@ class _DashboardHeader extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Hi, $firstName',
+                        'Hi, $displayName',
                         style: AppTextStyles.h3.copyWith(color: AppColors.white),
                         overflow: TextOverflow.ellipsis,
                       ),

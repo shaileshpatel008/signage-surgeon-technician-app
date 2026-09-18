@@ -44,7 +44,22 @@ class JobCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: AppColors.brandNavy.withValues(alpha: 0.06)),
+          // The old border-only look (6% navy, no shadow) barely read as
+          // a card against the off-white background — this gives it real
+          // elevation instead.
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandNavy.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: AppColors.brandNavy.withValues(alpha: 0.04),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
