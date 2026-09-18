@@ -72,7 +72,7 @@ class JobCard extends StatelessWidget {
             // old plain top-right status text.
             Container(
               color: visual.background,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
               child: Row(
                 children: [
                   Icon(visual.icon, size: 14, color: visual.foreground),
@@ -100,18 +100,27 @@ class JobCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              padding: const EdgeInsets.fromLTRB(16, 13, 16, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  StatusBadge.forService(job.serviceLabel),
-                  const SizedBox(height: 12),
-                  Text(job.title, style: AppTextStyles.h4),
+                  // Title and service type share one row (was two stacked
+                  // rows) — the biggest single contributor to excess card
+                  // height, since the service pill needed a full row to
+                  // itself before.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: Text(job.title, style: AppTextStyles.h4, overflow: TextOverflow.ellipsis)),
+                      const SizedBox(width: 8),
+                      StatusBadge.forService(job.serviceLabel),
+                    ],
+                  ),
                   if (job.visitDate != null || job.visitTimeStart != null || (job.address != null && job.address!.isNotEmpty)) ...[
-                    const SizedBox(height: 11),
+                    const SizedBox(height: 9),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: AppColors.brandOffwhite,
                         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
@@ -139,7 +148,7 @@ class JobCard extends StatelessWidget {
                               ],
                             ),
                           if (job.address != null && job.address!.isNotEmpty) ...[
-                            if (job.visitDate != null || job.visitTimeStart != null) const SizedBox(height: 8),
+                            if (job.visitDate != null || job.visitTimeStart != null) const SizedBox(height: 6),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -157,7 +166,7 @@ class JobCard extends StatelessWidget {
                     ),
                   ],
                   if (hasDirections || hasAction) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         if (hasDirections)
