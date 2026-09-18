@@ -33,7 +33,7 @@ class DashboardView extends GetView<DashboardController> {
       // so there's nothing left to pop back to) — without this, a back
       // press here exits the app with no warning at all.
       canPop: false,
-      onPopInvokedWithPopResult: (didPop, result) async {
+      onPopInvoked: (didPop) async {
         if (didPop) return;
         final confirmed = await AppDialog.confirm(
           title: 'Exit App',
