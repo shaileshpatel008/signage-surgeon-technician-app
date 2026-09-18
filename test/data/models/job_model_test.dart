@@ -2,16 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:signage_surgeon_technician/data/models/job_model.dart';
 
 void main() {
-  const technicianUid = 'tech-123';
-
-  group('JobModel.fromRequestDoc — two-visit service (repair/rebranding/new signage)', () {
-    test('site-visit-only assignment yields exactly one job with the right stage keys', () {
-      final jobs = JobModel.fromRequestDoc(
+  group('JobModel.fromSiteVisitDoc — two-visit service (repair/rebranding/new signage)', () {
+    test('builds the Site Visit job with the right stage keys and OTP fields', () {
+      final job = JobModel.fromSiteVisitDoc(
         id: 'req-1',
         service: ServiceTypes.repairing,
-        technicianUid: technicianUid,
         data: {
-          'assignedLabourUid': technicianUid,
           'signageType': 'LED Signboard',
           'trackingStage': 'tech_en_route',
           'siteVisitArrivalOtp': '1234',
@@ -19,8 +15,6 @@ void main() {
         },
       );
 
-      expect(jobs, hasLength(1));
-      final job = jobs.single;
       expect(job.visitLabel, 'Site Visit');
       expect(job.assignmentField, 'assignedLabourUid');
       expect(job.enRouteStage, 'tech_en_route');
@@ -31,14 +25,14 @@ void main() {
       expect(job.canMarkArrived, isTrue);
       expect(job.canMarkCompleted, isFalse);
     });
+  });
 
-    test('repair-visit assignment (assignedLabourUid2) uses the "_2" stage keys and workArrivalOtp', () {
-      final jobs = JobModel.fromRequestDoc(
+  group('JobModel.fromRepairVisitDoc — two-visit service', () {
+    test('builds the Repair Visit job using the "_2" stage keys and workArrivalOtp', () {
+      final job = JobModel.fromRepairVisitDoc(
         id: 'req-2',
         service: ServiceTypes.repairing,
-        technicianUid: technicianUid,
         data: {
-          'assignedLabourUid2': technicianUid,
           'signageType': 'LED Signboard',
           'trackingStage': 'work_in_progress_2',
           'workArrivalOtp': '1111',
@@ -46,8 +40,6 @@ void main() {
         },
       );
 
-      expect(jobs, hasLength(1));
-      final job = jobs.single;
       expect(job.visitLabel, 'Repair Visit');
       expect(job.assignmentField, 'assignedLabourUid2');
       expect(job.enRouteStage, 'tech_en_route_2');
@@ -59,49 +51,31 @@ void main() {
       expect(job.isDone, isFalse);
     });
 
-    test('a technician on BOTH visits of the same request yields two distinct jobs', () {
-      final jobs = JobModel.fromRequestDoc(
-        id: 'req-3',
-        service: ServiceTypes.rebranding,
-        technicianUid: technicianUid,
-        data: {
-          'assignedLabourUid': technicianUid,
-          'assignedLabourUid2': technicianUid,
-          'trackingStage': 'work_in_progress',
-        },
-      );
+    test(
+      'a technician on BOTH visits of the same request yields two distinct jobs, one per query — '
+      'this is the duplicate-listing regression: neither factory looks at the other assignment '
+      'field, matching the two independent forEach loops in labour/page.tsx',
+      () {
+        final data = {'assignedLabourUid': 'tech-123', 'assignedLabourUid2': 'tech-123', 'trackingStage': 'work_in_progress'};
 
-      expect(jobs, hasLength(2));
-      expect(jobs.map((j) => j.assignmentField), containsAll(['assignedLabourUid', 'assignedLabourUid2']));
-    });
+        final siteVisitJob = JobModel.fromSiteVisitDoc(id: 'req-3', service: ServiceTypes.rebranding, data: data);
+        final repairVisitJob = JobModel.fromRepairVisitDoc(id: 'req-3', service: ServiceTypes.rebranding, data: data);
 
-    test('a request the technician is not assigned to yields no jobs', () {
-      final jobs = JobModel.fromRequestDoc(
-        id: 'req-4',
-        service: ServiceTypes.newSignage,
-        technicianUid: technicianUid,
-        data: {'assignedLabourUid': 'someone-else'},
-      );
-      expect(jobs, isEmpty);
-    });
+        expect(siteVisitJob.assignmentField, 'assignedLabourUid');
+        expect(repairVisitJob.assignmentField, 'assignedLabourUid2');
+        expect(siteVisitJob.id, repairVisitJob.id);
+      },
+    );
   });
 
-  group('JobModel.fromRequestDoc — single-visit service (cleaning)', () {
+  group('JobModel.fromSiteVisitDoc — single-visit service (cleaning)', () {
     test('uses "Visit" as the label, "completed" as the done stage, and startingOtp/completionOtp', () {
-      final jobs = JobModel.fromRequestDoc(
+      final job = JobModel.fromSiteVisitDoc(
         id: 'req-5',
         service: ServiceTypes.cleaning,
-        technicianUid: technicianUid,
-        data: {
-          'assignedLabourUid': technicianUid,
-          'startingOtp': '9999',
-          'completionOtp': '8888',
-          'trackingStage': 'tech_en_route',
-        },
+        data: {'startingOtp': '9999', 'completionOtp': '8888', 'trackingStage': 'tech_en_route'},
       );
 
-      expect(jobs, hasLength(1));
-      final job = jobs.single;
       expect(job.visitLabel, 'Visit');
       expect(job.doneStage, 'completed');
       expect(job.arrivalOtp, '9999');
@@ -109,35 +83,19 @@ void main() {
     });
 
     test('falls back to cleaningPhase when trackingStage is absent, like labour/page.tsx does', () {
-      final jobs = JobModel.fromRequestDoc(
+      final job = JobModel.fromSiteVisitDoc(
         id: 'req-6',
         service: ServiceTypes.cleaning,
-        technicianUid: technicianUid,
-        data: {'assignedLabourUid': technicianUid, 'cleaningPhase': 'work_in_progress'},
+        data: {'cleaningPhase': 'work_in_progress'},
       );
 
-      expect(jobs.single.stage, 'work_in_progress');
-      expect(jobs.single.isDone, isFalse);
-    });
-
-    test('a cleaning request never gets a second visit even with assignedLabourUid2 set', () {
-      final jobs = JobModel.fromRequestDoc(
-        id: 'req-7',
-        service: ServiceTypes.cleaning,
-        technicianUid: technicianUid,
-        data: {'assignedLabourUid2': technicianUid},
-      );
-      expect(jobs, isEmpty);
+      expect(job.stage, 'work_in_progress');
+      expect(job.isDone, isFalse);
     });
   });
 
   test('title falls back to "Signage Job" when signageType is missing, like web', () {
-    final jobs = JobModel.fromRequestDoc(
-      id: 'req-8',
-      service: ServiceTypes.repairing,
-      technicianUid: technicianUid,
-      data: {'assignedLabourUid': technicianUid},
-    );
-    expect(jobs.single.title, 'Signage Job');
+    final job = JobModel.fromSiteVisitDoc(id: 'req-8', service: ServiceTypes.repairing, data: const {});
+    expect(job.title, 'Signage Job');
   });
 }

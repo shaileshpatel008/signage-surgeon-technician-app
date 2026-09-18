@@ -122,8 +122,8 @@ Each feature folder: `bindings/` (DI wiring for that route), `controllers/` (Get
 - Same stage machine per visit type (`tech_en_route` → `work_in_progress` →
   `site_visit_completed`/`completed`, with the `_2` variants for repair visits).
 - Same **inline**, card-level OTP confirmation (not a separate screen) — see
-  `JobModel.fromRequestDoc` and `DashboardController.confirmOtp` for the exact mapping; both
-  carry doc comments pointing at the equivalent web code.
+  `JobModel.fromSiteVisitDoc`/`fromRepairVisitDoc` and `DashboardController.confirmOtp` for the
+  exact mapping; both carry doc comments pointing at the equivalent web code.
 - Login is the same two-step flow (password → 6-digit email OTP) against the same
   `/api/admin/send-otp` / `verify-otp` routes, restricted here to `role == "labour"` only.
 

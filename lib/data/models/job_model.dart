@@ -102,81 +102,87 @@ class JobModel extends Equatable {
 
   String get title => (signageType == null || signageType!.isEmpty) ? 'Signage Job' : signageType!;
 
-  /// Builds the two possible [JobModel]s for a single request document,
-  /// exactly matching the two `.forEach` loops in `labour/page.tsx`'s
-  /// `load()` — one per assignment field the technician appears in.
-  static List<JobModel> fromRequestDoc({
+  /// Mirrors the `snap1.docs.forEach` body in `labour/page.tsx` exactly:
+  /// called once per doc returned by the `assignedLabourUid` query,
+  /// unconditionally builds the Site Visit job — it never looks at
+  /// `assignedLabourUid2`. Web doesn't check that field here either; the
+  /// two visit types are independent per-query results, not two facets
+  /// of one doc to be cross-checked. (A previous version of this method
+  /// checked both fields on every call, which meant a request the
+  /// technician is assigned to for BOTH visits — a normal case — got its
+  /// repair-visit job built twice: once here, once from
+  /// [fromRepairVisitDoc], because both queries return that same doc.
+  /// That's the duplicate-listing bug: web shows 2 records for such a
+  /// job, the app was showing 3.)
+  factory JobModel.fromSiteVisitDoc({
     required String id,
     required Map<String, dynamic> data,
     required ServiceTypeConfig service,
-    required String technicianUid,
   }) {
-    final jobs = <JobModel>[];
-    final location = data['location'] as Map<String, dynamic>?;
-    final photoUrls = (data['photoUrls'] as List?)?.whereType<String>().toList() ?? const <String>[];
-    final techPhotoUrls = (data['technicianPhotoUrls'] as List?)?.whereType<String>().toList() ?? const <String>[];
-    final finalQuotation = data['finalQuotation'] as Map<String, dynamic>?;
-
     final isCleaningSingleVisit = !service.hasSecondVisit;
+    final location = data['location'] as Map<String, dynamic>?;
 
-    if (data['assignedLabourUid'] == technicianUid) {
-      jobs.add(
-        JobModel(
-          id: id,
-          collection: service.collection,
-          serviceLabel: service.label,
-          signageType: data['signageType'] as String?,
-          stage: (data['trackingStage'] as String?) ?? (data['cleaningPhase'] as String?),
-          address: location?['address'] as String?,
-          lat: (location?['lat'] as num?)?.toDouble(),
-          lng: (location?['lng'] as num?)?.toDouble(),
-          photoUrls: photoUrls,
-          visitDate: AppDateUtils.fromTimestamp(data['visitDate']),
-          visitTimeStart: data['visitTimeStart'] as String?,
-          visitTimeEnd: data['visitTimeEnd'] as String?,
-          visitLabel: service.hasSecondVisit ? 'Site Visit' : 'Visit',
-          arrivalOtp: isCleaningSingleVisit ? data['startingOtp'] as String? : data['siteVisitArrivalOtp'] as String?,
-          completionOtp:
-              isCleaningSingleVisit ? data['completionOtp'] as String? : data['siteVisitCompletionOtp'] as String?,
-          enRouteStage: 'tech_en_route',
-          inProgressStage: 'work_in_progress',
-          doneStage: isCleaningSingleVisit ? 'completed' : 'site_visit_completed',
-          assignmentField: 'assignedLabourUid',
-          finalQuotation: finalQuotation,
-          technicianPhotoUrls: techPhotoUrls,
-        ),
-      );
-    }
+    return JobModel(
+      id: id,
+      collection: service.collection,
+      serviceLabel: service.label,
+      signageType: data['signageType'] as String?,
+      stage: (data['trackingStage'] as String?) ?? (data['cleaningPhase'] as String?),
+      address: location?['address'] as String?,
+      lat: (location?['lat'] as num?)?.toDouble(),
+      lng: (location?['lng'] as num?)?.toDouble(),
+      photoUrls: (data['photoUrls'] as List?)?.whereType<String>().toList() ?? const <String>[],
+      visitDate: AppDateUtils.fromTimestamp(data['visitDate']),
+      visitTimeStart: data['visitTimeStart'] as String?,
+      visitTimeEnd: data['visitTimeEnd'] as String?,
+      visitLabel: service.hasSecondVisit ? 'Site Visit' : 'Visit',
+      arrivalOtp: isCleaningSingleVisit ? data['startingOtp'] as String? : data['siteVisitArrivalOtp'] as String?,
+      completionOtp:
+          isCleaningSingleVisit ? data['completionOtp'] as String? : data['siteVisitCompletionOtp'] as String?,
+      enRouteStage: 'tech_en_route',
+      inProgressStage: 'work_in_progress',
+      doneStage: isCleaningSingleVisit ? 'completed' : 'site_visit_completed',
+      assignmentField: 'assignedLabourUid',
+      finalQuotation: data['finalQuotation'] as Map<String, dynamic>?,
+      technicianPhotoUrls: (data['technicianPhotoUrls'] as List?)?.whereType<String>().toList() ?? const <String>[],
+    );
+  }
 
-    if (service.hasSecondVisit && data['assignedLabourUid2'] == technicianUid) {
-      jobs.add(
-        JobModel(
-          id: id,
-          collection: service.collection,
-          serviceLabel: service.label,
-          signageType: data['signageType'] as String?,
-          stage: data['trackingStage'] as String?,
-          address: location?['address'] as String?,
-          lat: (location?['lat'] as num?)?.toDouble(),
-          lng: (location?['lng'] as num?)?.toDouble(),
-          photoUrls: photoUrls,
-          visitDate: AppDateUtils.fromTimestamp(data['visitDate2']),
-          visitTimeStart: data['visitTimeStart2'] as String?,
-          visitTimeEnd: data['visitTimeEnd2'] as String?,
-          visitLabel: 'Repair Visit',
-          arrivalOtp: data['workArrivalOtp'] as String?,
-          completionOtp: data['workCompletionOtp'] as String?,
-          enRouteStage: 'tech_en_route_2',
-          inProgressStage: 'work_in_progress_2',
-          doneStage: 'completed',
-          assignmentField: 'assignedLabourUid2',
-          finalQuotation: finalQuotation,
-          technicianPhotoUrls: techPhotoUrls,
-        ),
-      );
-    }
+  /// Mirrors the `snap2.docs.forEach` body in `labour/page.tsx`: called
+  /// once per doc returned by the `assignedLabourUid2` query, unconditionally
+  /// builds the Repair Visit job. Only ever called for `hasSecondVisit`
+  /// services — see [fromSiteVisitDoc]'s doc comment for why this doesn't
+  /// check `assignedLabourUid`.
+  factory JobModel.fromRepairVisitDoc({
+    required String id,
+    required Map<String, dynamic> data,
+    required ServiceTypeConfig service,
+  }) {
+    final location = data['location'] as Map<String, dynamic>?;
 
-    return jobs;
+    return JobModel(
+      id: id,
+      collection: service.collection,
+      serviceLabel: service.label,
+      signageType: data['signageType'] as String?,
+      stage: data['trackingStage'] as String?,
+      address: location?['address'] as String?,
+      lat: (location?['lat'] as num?)?.toDouble(),
+      lng: (location?['lng'] as num?)?.toDouble(),
+      photoUrls: (data['photoUrls'] as List?)?.whereType<String>().toList() ?? const <String>[],
+      visitDate: AppDateUtils.fromTimestamp(data['visitDate2']),
+      visitTimeStart: data['visitTimeStart2'] as String?,
+      visitTimeEnd: data['visitTimeEnd2'] as String?,
+      visitLabel: 'Repair Visit',
+      arrivalOtp: data['workArrivalOtp'] as String?,
+      completionOtp: data['workCompletionOtp'] as String?,
+      enRouteStage: 'tech_en_route_2',
+      inProgressStage: 'work_in_progress_2',
+      doneStage: 'completed',
+      assignmentField: 'assignedLabourUid2',
+      finalQuotation: data['finalQuotation'] as Map<String, dynamic>?,
+      technicianPhotoUrls: (data['technicianPhotoUrls'] as List?)?.whereType<String>().toList() ?? const <String>[],
+    );
   }
 
   JobModel copyWith({String? stage}) {

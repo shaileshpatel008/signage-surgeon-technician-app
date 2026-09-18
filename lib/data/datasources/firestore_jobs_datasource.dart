@@ -20,22 +20,17 @@ class FirestoreJobsDataSource {
 
       final snap1 = await collectionRef.where('assignedLabourUid', isEqualTo: technicianUid).get();
       for (final doc in snap1.docs) {
-        results.addAll(
-          JobModel.fromRequestDoc(id: doc.id, data: doc.data(), service: service, technicianUid: technicianUid),
-        );
+        results.add(JobModel.fromSiteVisitDoc(id: doc.id, data: doc.data(), service: service));
       }
 
       if (service.hasSecondVisit) {
         final snap2 = await collectionRef.where('assignedLabourUid2', isEqualTo: technicianUid).get();
         for (final doc in snap2.docs) {
-          // fromRequestDoc already checks both fields against the doc data,
-          // so a doc where the technician is BOTH assignedLabourUid and
-          // assignedLabourUid2 (rare, but web doesn't forbid it) correctly
-          // yields two distinct JobModels without double-adding from snap1.
-          final jobs = JobModel.fromRequestDoc(id: doc.id, data: doc.data(), service: service, technicianUid: technicianUid);
-          for (final job in jobs) {
-            if (job.assignmentField == 'assignedLabourUid2') results.add(job);
-          }
+          // Independent of the snap1 loop above — a doc where the
+          // technician is BOTH assignedLabourUid and assignedLabourUid2
+          // correctly yields two distinct JobModels, one per query, exactly
+          // like the two independent forEach loops in labour/page.tsx.
+          results.add(JobModel.fromRepairVisitDoc(id: doc.id, data: doc.data(), service: service));
         }
       }
     }
