@@ -73,7 +73,10 @@ class JobCard extends StatelessWidget {
                   style: AppTextStyles.overline,
                 ),
                 const Spacer(),
-                Text(CommonUtils.formatStage(job.stage), style: AppTextStyles.bodyMedium),
+                Text(
+                  CommonUtils.formatStage(job.stage),
+                  style: AppTextStyles.bodyMedium.copyWith(color: CommonUtils.stageColor(job.stage)),
+                ),
                 // Hidden for the client demo (needs to track the web flow
                 // exactly for now) — not removed, _JobMoreMenu below is
                 // still there to bring back later.

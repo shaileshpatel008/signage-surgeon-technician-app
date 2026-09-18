@@ -24,6 +24,8 @@ class AppColors {
   static const Color warningBg = Color(0x1FFECC00);
   static const Color danger = brandRed;
   static const Color dangerBg = Color(0x1AC92223);
+  static const Color info = Color(0xFF2563EB);
+  static const Color infoBg = Color(0x1A2563EB);
 
   static const Color borderLight = Color(0x0F0A1628); // black/6% over navy
   static const Color mutedText = Color(0xFF9AA1AD);
