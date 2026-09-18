@@ -18,7 +18,8 @@ class ReportsView extends GetView<ReportsController> {
     return Scaffold(
       backgroundColor: AppColors.brandOffwhite,
       appBar: AppBar(title: const Text('My Performance')),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 1),
+      // Hidden for the client demo — see dashboard_view.dart for why.
+      // bottomNavigationBar: const AppBottomNav(currentIndex: 1),
       body: Column(
         children: [
           const ProposedAdditionBanner(),

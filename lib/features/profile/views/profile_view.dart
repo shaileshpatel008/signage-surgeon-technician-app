@@ -18,7 +18,8 @@ class ProfileView extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.brandOffwhite,
-      bottomNavigationBar: const AppBottomNav(currentIndex: 2),
+      // Hidden for the client demo — see dashboard_view.dart for why.
+      // bottomNavigationBar: const AppBottomNav(currentIndex: 2),
       body: SafeArea(
         child: Column(
           children: [

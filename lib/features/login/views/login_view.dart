@@ -189,7 +189,11 @@ class _OtpStep extends StatelessWidget {
           keyboardType: TextInputType.number,
           maxLength: 6,
           textAlign: TextAlign.center,
-          style: AppTextStyles.h2.copyWith(letterSpacing: 8),
+          style: AppTextStyles.h2.copyWith(
+            letterSpacing: 8,
+            color: AppColors.brandGray,
+            fontWeight: FontWeight.w600,
+          ),
           decoration: const InputDecoration(counterText: '', hintText: '000000'),
         ),
         const SizedBox(height: 8),
