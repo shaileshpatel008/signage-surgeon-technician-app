@@ -37,14 +37,17 @@ class JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visual = CommonUtils.stageVisual(job.stage);
+    final hasDirections = job.address != null || (job.lat != null && job.lng != null);
+    final hasAction = job.canMarkArrived || job.canMarkCompleted;
+
     return Opacity(
       opacity: muted ? 0.7 : 1,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          border: Border.all(color: AppColors.brandNavy.withValues(alpha: 0.06)),
           // The old border-only look (6% navy, no shadow) barely read as
           // a card against the off-white background — this gives it real
           // elevation instead.
@@ -64,109 +67,160 @@ class JobCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                StatusBadge.forService(job.serviceLabel),
-                const SizedBox(width: 8),
-                Text(
-                  job.visitLabel.toUpperCase(),
-                  style: AppTextStyles.overline,
-                ),
-                const Spacer(),
-                Text(
-                  CommonUtils.formatStage(job.stage),
-                  style: AppTextStyles.bodyMedium.copyWith(color: CommonUtils.stageColor(job.stage)),
-                ),
-                // Hidden for the client demo (needs to track the web flow
-                // exactly for now) — not removed, _JobMoreMenu below is
-                // still there to bring back later.
-                // _JobMoreMenu(job: job),
-              ],
-            ),
-            const SizedBox(height: 9),
-            Text(job.title, style: AppTextStyles.h4),
-            if (job.visitDate != null || job.visitTimeStart != null) ...[
-              const SizedBox(height: 5),
-              Text(
-                [
-                  if (job.visitDate != null) AppDateUtils.formatVisitDate(job.visitDate),
-                  if (job.visitTimeStart != null)
-                    job.visitTimeEnd != null ? '${job.visitTimeStart} – ${job.visitTimeEnd}' : job.visitTimeStart!,
-                ].join(' · '),
-                style: AppTextStyles.bodyMedium,
-              ),
-            ],
-            if (job.address != null && job.address!.isNotEmpty) ...[
-              const SizedBox(height: 7),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Status band — full-width, colored by which stage bucket the
+            // job is in, so a whole list reads by color alone. Replaces the
+            // old plain top-right status text.
+            Container(
+              color: visual.background,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              child: Row(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(Icons.place_outlined, size: 13, color: AppColors.brandGray),
+                  Icon(visual.icon, size: 14, color: visual.foreground),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      CommonUtils.formatStage(job.stage).toUpperCase(),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: visual.foreground),
+                    ),
                   ),
-                  const SizedBox(width: 5),
-                  Expanded(child: Text(job.address!, style: AppTextStyles.bodySmall)),
+                  Text(
+                    job.visitLabel.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.4,
+                      color: visual.foreground.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  // Hidden for the client demo (needs to track the web flow
+                  // exactly for now) — not removed, _JobMoreMenu below is
+                  // still there to bring back later.
+                  // _JobMoreMenu(job: job),
                 ],
               ),
-            ],
-            const SizedBox(height: 11),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (job.address != null || (job.lat != null && job.lng != null))
-                  OutlinedButton.icon(
-                    onPressed: _openDirections,
-                    icon: const Icon(Icons.navigation_outlined, size: 14),
-                    label: const Text('Directions'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 36),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      textStyle: AppTextStyles.buttonTextOutline,
-                    ),
-                  ),
-                if (job.canMarkArrived)
-                  ElevatedButton(
-                    onPressed: () => controller.openArrivalOtp(job),
-                    style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 14)),
-                    child: const Text('Mark Arrived', style: TextStyle(fontSize: 11.5)),
-                  ),
-                if (job.canMarkCompleted)
-                  ElevatedButton(
-                    onPressed: () => controller.openCompletionOtp(job),
-                    style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 14)),
-                    child: const Text('Mark Work Completed', style: TextStyle(fontSize: 11.5)),
-                  ),
-              ],
             ),
-            if (job.photoUrls.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 14,
-                runSpacing: 8,
-                children: job.photoUrls.asMap().entries.map((entry) {
-                  return InkWell(
-                    onTap: () => _openPhoto(entry.value),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  StatusBadge.forService(job.serviceLabel),
+                  const SizedBox(height: 12),
+                  Text(job.title, style: AppTextStyles.h4),
+                  if (job.visitDate != null || job.visitTimeStart != null || (job.address != null && job.address!.isNotEmpty)) ...[
+                    const SizedBox(height: 11),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.brandOffwhite,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (job.visitDate != null || job.visitTimeStart != null)
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.brandGray),
+                                const SizedBox(width: 7),
+                                Expanded(
+                                  child: Text(
+                                    [
+                                      if (job.visitDate != null) AppDateUtils.formatVisitDate(job.visitDate),
+                                      if (job.visitTimeStart != null)
+                                        job.visitTimeEnd != null
+                                            ? '${job.visitTimeStart} – ${job.visitTimeEnd}'
+                                            : job.visitTimeStart!,
+                                    ].join(' · '),
+                                    style: AppTextStyles.bodyMedium,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (job.address != null && job.address!.isNotEmpty) ...[
+                            if (job.visitDate != null || job.visitTimeStart != null) const SizedBox(height: 8),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 2),
+                                  child: Icon(Icons.place_outlined, size: 14, color: AppColors.brandGray),
+                                ),
+                                const SizedBox(width: 7),
+                                Expanded(child: Text(job.address!, style: AppTextStyles.bodySmall)),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (hasDirections || hasAction) ...[
+                    const SizedBox(height: 12),
+                    Row(
                       children: [
-                        const Icon(Icons.image_outlined, size: 13, color: AppColors.brandRed),
-                        const SizedBox(width: 5),
-                        Text('Photo ${entry.key + 1}', style: AppTextStyles.link),
+                        if (hasDirections)
+                          OutlinedButton.icon(
+                            onPressed: _openDirections,
+                            icon: const Icon(Icons.navigation_outlined, size: 14),
+                            label: const Text('Directions'),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 36),
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              textStyle: AppTextStyles.buttonTextOutline,
+                            ),
+                          ),
+                        if (hasDirections && hasAction) const SizedBox(width: 8),
+                        if (job.canMarkArrived)
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => controller.openArrivalOtp(job),
+                              style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
+                              child: const Text('Mark Arrived', style: TextStyle(fontSize: 11.5)),
+                            ),
+                          ),
+                        if (job.canMarkCompleted)
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => controller.openCompletionOtp(job),
+                              style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
+                              child: const Text('Mark Work Completed', style: TextStyle(fontSize: 11.5)),
+                            ),
+                          ),
                       ],
                     ),
-                  );
-                }).toList(),
+                  ],
+                  if (job.photoUrls.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 14,
+                      runSpacing: 8,
+                      children: job.photoUrls.asMap().entries.map((entry) {
+                        return InkWell(
+                          onTap: () => _openPhoto(entry.value),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.image_outlined, size: 13, color: AppColors.brandRed),
+                              const SizedBox(width: 5),
+                              Text('Photo ${entry.key + 1}', style: AppTextStyles.link),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                  Obx(() {
+                    if (!controller.isOtpOpenFor(job)) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 11),
+                      child: OtpSheet(job: job, controller: controller),
+                    );
+                  }),
+                ],
               ),
-            ],
-            Obx(() {
-              if (!controller.isOtpOpenFor(job)) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(top: 11),
-                child: OtpSheet(job: job, controller: controller),
-              );
-            }),
+            ),
           ],
         ),
       ),
