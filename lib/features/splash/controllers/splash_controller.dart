@@ -19,8 +19,10 @@ class SplashController extends GetxController {
 
   Future<void> _bootstrap() async {
     // Minimum splash duration purely for brand presence — not a loading
-    // gate. The real gate is the session restore below.
-    final minDelay = Future.delayed(const Duration(milliseconds: 900));
+    // gate. The real gate is the session restore below. Always waited out
+    // in full even when the session restore finishes sooner, so the splash
+    // never flashes by in well under a second on a fast connection.
+    final minDelay = Future.delayed(const Duration(seconds: 3));
 
     try {
       // `restoreSession()` reads Firestore for a previously-signed-in
