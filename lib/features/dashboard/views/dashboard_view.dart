@@ -6,6 +6,7 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_dimensions.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/utils/common_utils.dart';
+import '../../../core/widgets/app_dialog.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_error_widget.dart';
 import '../../../core/widgets/app_loader.dart';
@@ -27,49 +28,67 @@ class DashboardView extends GetView<DashboardController> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: AppColors.brandOffwhite,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(88),
-          child: _DashboardHeader(controller: controller),
-        ),
-        // Hidden for the client demo (needs to track the web flow exactly
-        // for now) — not removed, just commented out.
-        // bottomNavigationBar: const AppBottomNav(currentIndex: 0),
-        body: SafeArea(
-          top: false,
-          child: Obx(() {
-            switch (controller.status.value) {
-              case LoadStatus.loading:
-                return const AppLoader(message: 'Loading your assigned work…');
-              case LoadStatus.error:
-                return AppErrorWidget(message: controller.errorMessage.value ?? 'Something went wrong.', onRetry: controller.refresh);
-              case LoadStatus.empty:
-                return RefreshIndicator(
-                  onRefresh: controller.refresh,
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 60),
-                    children: const [
-                      AppEmptyState(icon: Icons.work_outline_rounded, title: 'No jobs assigned to you right now.'),
-                    ],
-                  ),
-                );
-              case LoadStatus.loaded:
-                return RefreshIndicator(
-                  onRefresh: controller.refresh,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                    children: [
-                      _WorkGroup(title: 'Today', jobs: controller.todayJobs, controller: controller),
-                      _WorkGroup(title: 'Upcoming', jobs: controller.upcomingJobs, controller: controller),
-                      _WorkGroup(title: 'Completed', jobs: controller.completedJobs, controller: controller, muted: true),
-                    ],
-                  ),
-                );
-            }
-          }),
+    return PopScope(
+      // Dashboard is the app's root screen (reached via Get.offAllNamed,
+      // so there's nothing left to pop back to) — without this, a back
+      // press here exits the app with no warning at all.
+      canPop: false,
+      onPopInvokedWithPopResult: (didPop, result) async {
+        if (didPop) return;
+        final confirmed = await AppDialog.confirm(
+          title: 'Exit App',
+          message: 'Are you sure you want to exit The Signage Surgeon?',
+          confirmLabel: 'Exit',
+        );
+        if (confirmed) SystemNavigator.pop();
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: Scaffold(
+          backgroundColor: AppColors.brandOffwhite,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(88),
+            child: _DashboardHeader(controller: controller),
+          ),
+          // Hidden for the client demo (needs to track the web flow
+          // exactly for now) — not removed, just commented out.
+          // bottomNavigationBar: const AppBottomNav(currentIndex: 0),
+          body: SafeArea(
+            top: false,
+            child: Obx(() {
+              switch (controller.status.value) {
+                case LoadStatus.loading:
+                  return const AppLoader(message: 'Loading your assigned work…');
+                case LoadStatus.error:
+                  return AppErrorWidget(
+                    message: controller.errorMessage.value ?? 'Something went wrong.',
+                    onRetry: controller.refresh,
+                  );
+                case LoadStatus.empty:
+                  return RefreshIndicator(
+                    onRefresh: controller.refresh,
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(vertical: 60),
+                      children: const [
+                        AppEmptyState(icon: Icons.work_outline_rounded, title: 'No jobs assigned to you right now.'),
+                      ],
+                    ),
+                  );
+                case LoadStatus.loaded:
+                  return RefreshIndicator(
+                    onRefresh: controller.refresh,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      children: [
+                        _WorkGroup(title: 'Today', jobs: controller.todayJobs, controller: controller),
+                        _WorkGroup(title: 'Upcoming', jobs: controller.upcomingJobs, controller: controller),
+                        _WorkGroup(title: 'Completed', jobs: controller.completedJobs, controller: controller, muted: true),
+                      ],
+                    ),
+                  );
+              }
+            }),
+          ),
         ),
       ),
     );
