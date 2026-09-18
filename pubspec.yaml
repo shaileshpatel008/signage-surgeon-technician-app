@@ -63,10 +63,12 @@ flutter:
   assets:
     - assets/images/
 
-# `dart run flutter_launcher_icons` regenerates every Android/iOS launcher
-# icon from the brand logo — the placeholder navy squares checked into
-# android/app/src/main/res/mipmap-*/ are just so a fresh clone builds
-# before you've run this.
+# The real Android launcher icon (legacy mipmap-*/ic_launcher.png +
+# adaptive icon foreground/background) is already generated and committed
+# under android/app/src/main/res/. `dart run flutter_launcher_icons` is
+# still here so it's a one-command regenerate if the logo ever changes —
+# it'll overwrite those files using this same config (and add iOS's,
+# once ios/ exists — see README "iOS" note).
 flutter_launcher_icons:
   android: true
   ios: true

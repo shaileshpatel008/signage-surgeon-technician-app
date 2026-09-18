@@ -150,9 +150,15 @@ Covers the logic that actually matters to get right — not widget snapshots:
 - `android/app/build.gradle`: `applicationId "com.thesignagesurgeon.technician"`, `minSdk 23`
   (required by Firebase Auth + `flutter_reactive_ble`), R8 minify + resource shrinking enabled
   for `release`, ProGuard rules for Firebase/Flutter/BLE in `android/app/proguard-rules.pro`.
-- **Placeholder launcher icons** ship in `android/app/src/main/res/mipmap-*/` (solid navy
-  squares) just so a fresh clone builds. Run `dart run flutter_launcher_icons` to generate the
-  real ones from `assets/images/logo.png` (already configured in `pubspec.yaml`).
+- **Launcher icon**: the real brand logo, already generated and committed —
+  `android/app/src/main/res/mipmap-*/ic_launcher.png` (legacy, pre-Android-8 devices: navy
+  rounded-square background with the logo centered) and `mipmap-*/ic_launcher_foreground.png` +
+  `mipmap-anydpi-v26/ic_launcher.xml` + `values/colors.xml`'s `ic_launcher_background` (adaptive
+  icon, Android 8+ — logo kept inside the safe zone so it isn't clipped by circle/squircle/
+  rounded-square launcher masks). A 512×512 Play Store listing icon is at
+  `assets/store/play_store_icon.png`. If the logo ever changes, `dart run flutter_launcher_icons`
+  regenerates all of these from `assets/images/logo.png` using the config already in
+  `pubspec.yaml`.
 - **Signing**: copy `android/key.properties.sample` → `android/key.properties` (gitignored)
   once you've generated an upload keystore:
 
