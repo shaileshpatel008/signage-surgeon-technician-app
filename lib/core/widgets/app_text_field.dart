@@ -44,7 +44,12 @@ class AppTextField extends StatelessWidget {
           enabled: enabled,
           maxLength: maxLength,
           style: AppTextStyles.bodyMedium,
-          decoration: InputDecoration(hintText: hint, suffixIcon: suffixIcon, counterText: ''),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.mutedText, fontWeight: FontWeight.w400),
+            suffixIcon: suffixIcon,
+            counterText: '',
+          ),
         ),
       ],
     );

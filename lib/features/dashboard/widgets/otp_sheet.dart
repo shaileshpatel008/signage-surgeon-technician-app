@@ -42,10 +42,15 @@ class OtpSheet extends StatelessWidget {
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
                   style: AppTextStyles.h4.copyWith(letterSpacing: 3),
-                  decoration: const InputDecoration(
-                    hintText: 'Enter code',
+                  decoration: InputDecoration(
+                    // Was inheriting the input's own bold/letter-spaced
+                    // style, which made "Enter code" far wider than this
+                    // 130px field and forced an ugly wrap. Own hintStyle,
+                    // shorter text, no extra tracking.
+                    hintText: 'Code',
+                    hintStyle: AppTextStyles.body.copyWith(color: AppColors.mutedText, letterSpacing: 0, fontWeight: FontWeight.w500),
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
               ),

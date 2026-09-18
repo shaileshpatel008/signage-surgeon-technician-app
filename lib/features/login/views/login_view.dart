@@ -194,7 +194,11 @@ class _OtpStep extends StatelessWidget {
             color: AppColors.brandGray,
             fontWeight: FontWeight.w600,
           ),
-          decoration: const InputDecoration(counterText: '', hintText: '000000'),
+          decoration: InputDecoration(
+            counterText: '',
+            hintText: '000000',
+            hintStyle: AppTextStyles.h2.copyWith(letterSpacing: 8, color: AppColors.mutedText),
+          ),
         ),
         const SizedBox(height: 8),
         Obx(() {
