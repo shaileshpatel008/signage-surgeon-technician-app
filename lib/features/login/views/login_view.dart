@@ -16,41 +16,67 @@ class LoginView extends GetView<LoginController> {
     return Scaffold(
       backgroundColor: AppColors.brandOffwhite,
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                border: Border.all(color: AppColors.borderLight),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 8))],
-              ),
-              padding: const EdgeInsets.all(10),
-              child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              height: 4,
-              width: 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                gradient: const LinearGradient(colors: [AppColors.brandYellow, AppColors.brandRed]),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                child: Obx(
-                  () => controller.step.value == LoginStep.credentials
-                      ? _CredentialsStep(controller: controller)
-                      : _OtpStep(controller: controller),
+        // A plain Column + Expanded(ScrollView) left the form pinned to the
+        // top with a large dead zone below it whenever the form is shorter
+        // than the screen (the common case, keyboard closed). Sizing the
+        // scroll content to at least the viewport height and centering the
+        // form in the remaining space (below the fixed logo block) balances
+        // the page instead, while still scrolling normally once the
+        // keyboard pushes the content taller than the viewport.
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 32),
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                          border: Border.all(color: AppColors.borderLight),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 8)),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(10),
+                        child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        height: 4,
+                        width: 56,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          gradient: const LinearGradient(colors: [AppColors.brandYellow, AppColors.brandRed]),
+                        ),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Obx(
+                                () => controller.step.value == LoginStep.credentials
+                                    ? _CredentialsStep(controller: controller)
+                                    : _OtpStep(controller: controller),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
