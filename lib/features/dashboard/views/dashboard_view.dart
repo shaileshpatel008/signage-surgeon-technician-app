@@ -150,10 +150,18 @@ class _DashboardHeader extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Hidden for now — not removed, re-enable when
+                // notifications are ready to ship.
+                // _HeaderIconButton(
+                //   icon: Icons.notifications_outlined,
+                //   tooltip: 'Notifications',
+                //   onTap: () => Get.toNamed(Routes.notifications),
+                // ),
+                // const SizedBox(width: 8),
                 _HeaderIconButton(
-                  icon: Icons.notifications_outlined,
-                  tooltip: 'Notifications',
-                  onTap: () => Get.toNamed(Routes.notifications),
+                  icon: Icons.refresh_rounded,
+                  tooltip: 'Refresh',
+                  onTap: controller.refresh,
                 ),
                 const SizedBox(width: 8),
                 _HeaderIconButton(
