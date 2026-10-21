@@ -131,10 +131,13 @@ Each feature folder: `bindings/` (DI wiring for that route), `controllers/` (Get
   advances the job to (a two-visit service's Site Visit included, not just its final Repair
   Visit). Photos are picked via `image_picker` (`maxWidth`/`maxHeight: 1600`,
   `imageQuality: 80` — JPEG re-encode, no extra compression package needed), uploaded to
-  Firebase Storage at `completion_photos/{collection}/{requestId}/{timestamp}_{index}.jpg`, then
-  written onto the request doc as `completionPhotos: [{url, storagePath, uploadedBy,
-  uploadedAt}]` together with `trackingStage` in one `update()` call (`JobsRepository.
-  completeJobWithPhotos` / `FirestoreJobsDataSource.completeWithPhotos`) — so a job can never end
+  Firebase Storage at `{collection}/{requestId}/completion_photos/{timestamp}_{index}.jpg` — this
+  shape (not the originally-specified `completion_photos/{collection}/...`) is what actually
+  matches the deployed Storage rules' `isLabour()`-gated rule; see the doc comment on
+  `JobsRepository.completeJobWithPhotos` for why — then written onto the request doc as
+  `completionPhotos: [{url, storagePath, uploadedBy, uploadedAt}]` together with `trackingStage`
+  in one `update()` call (`JobsRepository.completeJobWithPhotos` /
+  `FirestoreJobsDataSource.completeWithPhotos`) — so a job can never end
   up "completed" with no photos on it. Matches web's Firestore rules change allowing a
   technician's own update to touch `['trackingStage', 'completionPhotos']` only.
 

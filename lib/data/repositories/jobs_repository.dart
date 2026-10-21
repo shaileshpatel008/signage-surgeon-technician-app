@@ -37,13 +37,25 @@ class JobsRepository {
   }
 
   /// Completion-with-photos: uploads each file to Firebase Storage at
-  /// `completion_photos/{serviceCollection}/{requestId}/{timestamp}_{index}.jpg`
-  /// (the exact path the backend contract specifies), then writes
-  /// `completionPhotos` and `trackingStage` onto the request doc in one
-  /// update. Fails fast — if any upload throws, nothing is written to
-  /// Firestore, so a job is never marked completed with partial/missing
-  /// photos. [onProgress] reports 1-based (uploaded, total) after each
-  /// file finishes, for a simple "Uploading photo 2 of 4" indicator.
+  /// `{serviceCollection}/{requestId}/completion_photos/{timestamp}_{index}.jpg`,
+  /// then writes `completionPhotos` and `trackingStage` onto the request
+  /// doc in one update. Fails fast — if any upload throws, nothing is
+  /// written to Firestore, so a job is never marked completed with
+  /// partial/missing photos. [onProgress] reports 1-based (uploaded,
+  /// total) after each file finishes, for a simple "Uploading photo 2 of
+  /// 4" indicator.
+  ///
+  /// Path shape note: the originally-specified
+  /// `completion_photos/{collection}/{requestId}/...` 403'd against the
+  /// deployed Storage rules — their `match /{collection}/{requestId}/
+  /// {allPaths=**}` rule (the one gated on `isLabour()`, clearly meant for
+  /// exactly this upload) binds `collection` to whatever the FIRST path
+  /// segment is, so a leading `completion_photos/` segment made that bind
+  /// to `"completion_photos"` itself, which isn't in the collection
+  /// whitelist, and the request fell through to the rules' deny-all catch-
+  /// all. Putting `{collection}` first and nesting the file under the
+  /// request instead matches that rule as intended — no rules change
+  /// needed.
   Future<ApiResult<void>> completeJobWithPhotos({
     required JobModel job,
     required String targetStage,
@@ -55,7 +67,7 @@ class JobsRepository {
       final completionPhotos = <Map<String, dynamic>>[];
       for (var i = 0; i < photoFiles.length; i++) {
         final storagePath =
-            'completion_photos/${job.collection}/${job.id}/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+            '${job.collection}/${job.id}/completion_photos/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
         final ref = _storage.ref(storagePath);
         await ref.putFile(photoFiles[i]);
         final url = await ref.getDownloadURL();
