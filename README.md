@@ -126,11 +126,10 @@ Each feature folder: `bindings/` (DI wiring for that route), `controllers/` (Get
   exact mapping; both carry doc comments pointing at the equivalent web code.
 - Login is the same two-step flow (password → 6-digit email OTP) against the same
   `/api/admin/send-otp` / `verify-otp` routes, restricted here to `role == "labour"` only.
-- **Completion photos (backend contract, not from web today):** marking a job completed when
-  that's its FINAL stage (`JobModel.requiresCompletionPhotos` — true when `doneStage ==
-  "completed"`, i.e. a repair visit or a single-visit cleaning job; false for a two-visit
-  service's Site Visit, which only reaches the intermediate `site_visit_completed`) now also
-  requires 1–6 photos. Photos are picked via `image_picker` (`maxWidth`/`maxHeight: 1600`,
+- **Completion photos (backend contract, not from web today):** every "Mark Work Completed"
+  confirmation — arrival OTP is unaffected — now also requires 1–6 photos, whichever stage it
+  advances the job to (a two-visit service's Site Visit included, not just its final Repair
+  Visit). Photos are picked via `image_picker` (`maxWidth`/`maxHeight: 1600`,
   `imageQuality: 80` — JPEG re-encode, no extra compression package needed), uploaded to
   Firebase Storage at `completion_photos/{collection}/{requestId}/{timestamp}_{index}.jpg`, then
   written onto the request doc as `completionPhotos: [{url, storagePath, uploadedBy,

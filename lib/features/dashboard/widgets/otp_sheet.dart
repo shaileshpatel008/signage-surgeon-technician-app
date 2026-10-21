@@ -14,8 +14,8 @@ import '../controllers/dashboard_controller.dart';
 /// its Confirm/Cancel row and inline error text. Deliberately not a modal:
 /// web renders this inside the same card, so this does too.
 ///
-/// For a job whose completion is the FINAL "completed" stage (backend
-/// contract — see [JobModel.requiresCompletionPhotos]), also shows the
+/// For a completion confirmation (backend contract: every "Mark Work
+/// Completed", whichever stage it advances the job to), also shows the
 /// completion-photos step below the OTP row; Confirm uploads those photos
 /// and writes `completionPhotos` + `trackingStage` together, so the OTP
 /// check this panel always did stays exactly as it was.
@@ -28,7 +28,7 @@ class OtpSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final needsPhotos = controller.otpMode.value == OtpMode.completion && job.requiresCompletionPhotos;
+      final needsPhotos = controller.otpMode.value == OtpMode.completion;
 
       return Container(
         padding: const EdgeInsets.all(12),

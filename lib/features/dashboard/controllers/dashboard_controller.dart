@@ -41,9 +41,9 @@ class DashboardController extends GetxController {
   final RxBool confirmingOtp = false.obs;
   final RxnString otpError = RxnString();
 
-  /// Completion-photos step (backend contract: required before a job can
-  /// reach its FINAL "completed" stage — see [JobModel.requiresCompletionPhotos]).
-  /// Only ever populated while a completion OTP sheet needing photos is open.
+  /// Completion-photos step (backend contract: required for every
+  /// "Mark Work Completed" confirmation, whichever stage it advances the
+  /// job to). Only ever populated while a completion OTP sheet is open.
   final ImagePicker _picker = ImagePicker();
   final RxList<File> completionPhotos = <File>[].obs;
   final RxnString photosError = RxnString();
@@ -183,7 +183,7 @@ class DashboardController extends GetxController {
     }
 
     final targetStage = mode == OtpMode.arrival ? job.inProgressStage : job.doneStage;
-    final needsPhotos = mode == OtpMode.completion && job.requiresCompletionPhotos;
+    final needsPhotos = mode == OtpMode.completion;
 
     if (needsPhotos && completionPhotos.length < kMinCompletionPhotos) {
       photosError.value = 'Add at least $kMinCompletionPhotos photo of the finished work before marking this job completed.';
