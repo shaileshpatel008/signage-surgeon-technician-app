@@ -100,6 +100,13 @@ class JobModel extends Equatable {
   bool get canMarkCompleted => stage == inProgressStage;
   bool get isToday => AppDateUtils.isToday(visitDate);
 
+  /// Backend contract: completion photos are required only for the FINAL
+  /// "completed" transition — a repair visit, or a single-visit cleaning
+  /// job. NOT for the intermediate `site_visit_completed` stage a
+  /// two-visit service passes through before its repair visit, since the
+  /// job isn't actually finished at that point.
+  bool get requiresCompletionPhotos => doneStage == 'completed';
+
   String get title => (signageType == null || signageType!.isEmpty) ? 'Signage Job' : signageType!;
 
   /// Mirrors the `snap1.docs.forEach` body in `labour/page.tsx` exactly:

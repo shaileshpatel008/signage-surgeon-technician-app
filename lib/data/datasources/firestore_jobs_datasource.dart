@@ -45,6 +45,25 @@ class FirestoreJobsDataSource {
     return _db.collection(collection).doc(requestId).update({'trackingStage': targetStage});
   }
 
+  /// Completion-with-photos backend contract: the technician's upload is
+  /// already done by the time this runs (see
+  /// `JobsRepository.completeJobWithPhotos`) — this writes `trackingStage`
+  /// and `completionPhotos` together in ONE update, so a "completed" job
+  /// never exists without photos on it. Field name and shape ("url",
+  /// "storagePath", "uploadedBy", "uploadedAt") match exactly what the web
+  /// admin panel reads.
+  Future<void> completeWithPhotos({
+    required String collection,
+    required String requestId,
+    required String targetStage,
+    required List<Map<String, dynamic>> completionPhotos,
+  }) {
+    return _db.collection(collection).doc(requestId).update({
+      'trackingStage': targetStage,
+      'completionPhotos': FieldValue.arrayUnion(completionPhotos),
+    });
+  }
+
   /// Proposed addition: appends a technician-uploaded work-proof photo URL.
   /// `technicianPhotoUrls` is a new field this app introduces — it does
   /// not exist in the current web schema.

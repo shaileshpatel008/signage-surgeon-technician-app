@@ -98,4 +98,24 @@ void main() {
     final job = JobModel.fromSiteVisitDoc(id: 'req-8', service: ServiceTypes.repairing, data: const {});
     expect(job.title, 'Signage Job');
   });
+
+  group('JobModel.requiresCompletionPhotos — backend contract: only the FINAL "completed" stage', () {
+    test('a two-visit service\'s Site Visit does NOT require photos (doneStage is "site_visit_completed")', () {
+      final job = JobModel.fromSiteVisitDoc(id: 'req-9', service: ServiceTypes.repairing, data: const {});
+      expect(job.doneStage, 'site_visit_completed');
+      expect(job.requiresCompletionPhotos, isFalse);
+    });
+
+    test('a two-visit service\'s Repair Visit DOES require photos (doneStage is "completed")', () {
+      final job = JobModel.fromRepairVisitDoc(id: 'req-10', service: ServiceTypes.repairing, data: const {});
+      expect(job.doneStage, 'completed');
+      expect(job.requiresCompletionPhotos, isTrue);
+    });
+
+    test('a single-visit cleaning job DOES require photos (its only visit ends in "completed")', () {
+      final job = JobModel.fromSiteVisitDoc(id: 'req-11', service: ServiceTypes.cleaning, data: const {});
+      expect(job.doneStage, 'completed');
+      expect(job.requiresCompletionPhotos, isTrue);
+    });
+  });
 }

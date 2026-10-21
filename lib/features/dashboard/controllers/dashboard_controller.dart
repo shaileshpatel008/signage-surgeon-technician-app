@@ -1,12 +1,19 @@
+import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../core/services/permission_service.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/app_dialog.dart';
 import '../../../data/models/admin_user_model.dart';
 import '../../../data/models/job_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/jobs_repository.dart';
+
+/// Backend contract for the completion-photos step below.
+const int kMinCompletionPhotos = 1;
+const int kMaxCompletionPhotos = 6;
 
 enum LoadStatus { loading, loaded, empty, error }
 
@@ -33,6 +40,15 @@ class DashboardController extends GetxController {
   final TextEditingController otpTextController = TextEditingController();
   final RxBool confirmingOtp = false.obs;
   final RxnString otpError = RxnString();
+
+  /// Completion-photos step (backend contract: required before a job can
+  /// reach its FINAL "completed" stage — see [JobModel.requiresCompletionPhotos]).
+  /// Only ever populated while a completion OTP sheet needing photos is open.
+  final ImagePicker _picker = ImagePicker();
+  final RxList<File> completionPhotos = <File>[].obs;
+  final RxnString photosError = RxnString();
+  final RxInt uploadProgressDone = 0.obs;
+  final RxInt uploadProgressTotal = 0.obs;
 
   @override
   void onInit() {
@@ -98,12 +114,52 @@ class DashboardController extends GetxController {
     otpMode.value = OtpMode.completion;
     otpTextController.clear();
     otpError.value = null;
+    completionPhotos.clear();
+    photosError.value = null;
   }
 
   void cancelOtp() {
     openOtpKey.value = null;
     otpMode.value = null;
     otpError.value = null;
+    completionPhotos.clear();
+    photosError.value = null;
+    uploadProgressDone.value = 0;
+    uploadProgressTotal.value = 0;
+  }
+
+  Future<void> addCompletionPhoto(ImageSource source) async {
+    if (completionPhotos.length >= kMaxCompletionPhotos) {
+      photosError.value = 'You can attach up to $kMaxCompletionPhotos photos.';
+      return;
+    }
+
+    final hasPermission = source == ImageSource.camera
+        ? await PermissionService.instance.requestCamera()
+        : await PermissionService.instance.requestPhotos();
+    if (!hasPermission) {
+      photosError.value = 'Permission needed to ${source == ImageSource.camera ? 'take a photo' : 'access your photos'}.';
+      return;
+    }
+
+    // maxWidth/maxHeight constrain the longer side to ~1600px (aspect
+    // ratio preserved); imageQuality re-encodes as JPEG at ~80% — matches
+    // the backend contract's compression target.
+    final picked = await _picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
+
+    completionPhotos.add(File(picked.path));
+    photosError.value = null;
+  }
+
+  void removeCompletionPhoto(int index) {
+    if (index < 0 || index >= completionPhotos.length) return;
+    completionPhotos.removeAt(index);
   }
 
   /// Mirrors `confirmOtp()` in `labour/page.tsx`: validates the entered
@@ -126,9 +182,31 @@ class DashboardController extends GetxController {
       return;
     }
 
-    confirmingOtp.value = true;
     final targetStage = mode == OtpMode.arrival ? job.inProgressStage : job.doneStage;
-    final result = await _jobsRepository.advanceStage(job, targetStage);
+    final needsPhotos = mode == OtpMode.completion && job.requiresCompletionPhotos;
+
+    if (needsPhotos && completionPhotos.length < kMinCompletionPhotos) {
+      photosError.value = 'Add at least $kMinCompletionPhotos photo of the finished work before marking this job completed.';
+      return;
+    }
+
+    confirmingOtp.value = true;
+    photosError.value = null;
+    uploadProgressDone.value = 0;
+    uploadProgressTotal.value = needsPhotos ? completionPhotos.length : 0;
+
+    final result = needsPhotos
+        ? await _jobsRepository.completeJobWithPhotos(
+            job: job,
+            targetStage: targetStage,
+            photoFiles: completionPhotos.toList(),
+            technicianUid: admin.value?.uid ?? '',
+            onProgress: (done, total) {
+              uploadProgressDone.value = done;
+              uploadProgressTotal.value = total;
+            },
+          )
+        : await _jobsRepository.advanceStage(job, targetStage);
     confirmingOtp.value = false;
 
     result.when(
@@ -137,7 +215,16 @@ class DashboardController extends GetxController {
         if (index != -1) jobs[index] = job.copyWith(stage: targetStage);
         cancelOtp();
       },
-      failure: (message) => otpError.value = message,
+      // On failure the selected photos stay in [completionPhotos], so
+      // tapping Confirm again (the only retry affordance) re-runs the
+      // same upload instead of making the technician re-pick everything.
+      failure: (message) {
+        if (needsPhotos) {
+          photosError.value = message;
+        } else {
+          otpError.value = message;
+        }
+      },
     );
   }
 

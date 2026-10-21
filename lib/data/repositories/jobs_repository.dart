@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../../core/network/api_response.dart';
 import '../../core/services/logger_service.dart';
@@ -32,6 +33,53 @@ class JobsRepository {
     } catch (e, st) {
       logger.error('advanceStage failed', e, st);
       return const ApiResult.failure('Something went wrong saving this. Please try again.');
+    }
+  }
+
+  /// Completion-with-photos: uploads each file to Firebase Storage at
+  /// `completion_photos/{serviceCollection}/{requestId}/{timestamp}_{index}.jpg`
+  /// (the exact path the backend contract specifies), then writes
+  /// `completionPhotos` and `trackingStage` onto the request doc in one
+  /// update. Fails fast — if any upload throws, nothing is written to
+  /// Firestore, so a job is never marked completed with partial/missing
+  /// photos. [onProgress] reports 1-based (uploaded, total) after each
+  /// file finishes, for a simple "Uploading photo 2 of 4" indicator.
+  Future<ApiResult<void>> completeJobWithPhotos({
+    required JobModel job,
+    required String targetStage,
+    required List<File> photoFiles,
+    required String technicianUid,
+    void Function(int uploaded, int total)? onProgress,
+  }) async {
+    try {
+      final completionPhotos = <Map<String, dynamic>>[];
+      for (var i = 0; i < photoFiles.length; i++) {
+        final storagePath =
+            'completion_photos/${job.collection}/${job.id}/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        final ref = _storage.ref(storagePath);
+        await ref.putFile(photoFiles[i]);
+        final url = await ref.getDownloadURL();
+        completionPhotos.add({
+          'url': url,
+          'storagePath': storagePath,
+          'uploadedBy': technicianUid,
+          // FieldValue.serverTimestamp() isn't allowed inside an
+          // arrayUnion element, so this is a client timestamp.
+          'uploadedAt': Timestamp.now(),
+        });
+        onProgress?.call(i + 1, photoFiles.length);
+      }
+
+      await _dataSource.completeWithPhotos(
+        collection: job.collection,
+        requestId: job.id,
+        targetStage: targetStage,
+        completionPhotos: completionPhotos,
+      );
+      return const ApiResult.success(null);
+    } catch (e, st) {
+      logger.error('completeJobWithPhotos failed', e, st);
+      return const ApiResult.failure("Couldn't upload photos. Please try again.");
     }
   }
 
